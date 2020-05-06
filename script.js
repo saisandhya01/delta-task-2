@@ -2,10 +2,24 @@ let canvas=document.getElementById('canvas');
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 let c=canvas.getContext('2d');
+
+//to stop the game when the ball hits the wrong color
 function stopGame(){
     window.location.reload();
- 
 }
+let totalScore=0;
+let colors=['purple','deeppink','yellow','blue'];
+
+//function to display the score
+function score(){
+    c.fillStyle='green';
+    c.font="bold 30px Arial";
+    c.fillText('Score',50,40);
+    c.fillStyle='white';
+    c.font="bold 25px Arial";
+    c.fillText(totalScore,83,80);
+}
+
 class Wheel{
     constructor(y,startAngle,endAngle,color){
         this.y=y
@@ -29,15 +43,11 @@ class Wheel{
     drawCircle(){
         c.beginPath()
         c.arc(canvas.width/2,this.y,80,0,Math.PI*2,false)
-        c.fillStyle='skyblue'
+        c.fillStyle='black'
         c.closePath()
         c.fill()
     }
-    getDistance(y1,y2){
-        this.y=y1
-        let yDistance=y2-this.y
-        return Math.sqrt(Math.pow(yDistance,2))
-    }
+    
 }
 class Ball{
     constructor(y,dy,color){
@@ -46,6 +56,7 @@ class Ball{
         this.color=color
     }
     draw(){
+        c.globalAlpha=1
         c.beginPath()
         c.arc(canvas.width/2,this.y,10,0,Math.PI*2,false)
         c.fillStyle=this.color
@@ -65,49 +76,64 @@ canvas.onclick=()=>{
    
    ball.update(ball.y,-10);
    
-}   
+}  
+function collisionDetection(a,b,c,d){
+    if(a>c && a<b){
+        let colorBall=ball.color;
+        let colorWheel=d;
+        if(colorBall.localeCompare(colorWheel)===0){
+            return false;
+        }
+        else{
+            console.log('is this working?')
+            return true;
+        }
+    }
+    else{
+        return false;
+    }
+    
+} 
 
 let objects=[];
 let y=canvas.height/2-50;
 function init(){
     
-    for(let i=0;i<10;i++){
+    for(let i=0;i<1;i++){
       var wheel=new Wheel(y,0,Math.PI/2,'purple');
       objects.push(wheel);
       var wheel1=new Wheel(y,(Math.PI/2),Math.PI,'yellow');
       objects.push(wheel1);
       var wheel2=new Wheel(y,Math.PI,Math.PI/2*3,'blue');
       objects.push(wheel2);
-      var wheel3=new Wheel(y,(Math.PI/2*3),Math.PI*2,'pink');
+      var wheel3=new Wheel(y,(Math.PI/2*3),Math.PI*2,'deeppink');
       objects.push(wheel3);
-      y-=300;
+    
     }    
 }
+
 function drawFrame(){
     c.clearRect(0,0,canvas.width,canvas.height);
+    //score
+    score();
     //tapping ball
     ball.draw();
     if(ball.y<canvas.height-40){
     ball.dy+=1;
     ball.update(ball.y,ball.dy);
     }
-    //obstacle 1-wheel
+    //obstacles
     objects.forEach(object => {
         object.update();
         object.drawCircle();
-        let b=ball.color;
-        let o=object.color;
         /*
-        if(object.getDistance(object.y,ball.y)<110){
-            if(b.localeCompare(o)===0){
-                console.log(ball.color)
-            }
-        } */
-        
         if(ball.y<canvas.height/2+50){
             object.y+=1;
         }
-        
+        */
+       if(collisionDetection(ball.y-10,object.y+100,object.y-100,object.color)){
+           stopGame();
+       }
     });
     requestAnimationFrame(drawFrame)
 }
