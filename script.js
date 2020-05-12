@@ -17,10 +17,11 @@ if(typeof(Storage)!=="undefined"){
 let colors=['blue','deeppink','yellow','purple'];
 let totalScore=0;
 let died=false;
+let moveY=0;
 let tap=new Audio('sound1.mp3');
 let bleep=new Audio('sound2.mp3')
 let coordinates=function(dx,dy){
-    return {x:dx,y:canvas.height-dy}
+    return {x:dx,y:canvas.height-dy+moveY}
 }
 function returnColor(colors){
     let col=colors[Math.floor(Math.random()*4)];
@@ -242,6 +243,7 @@ canvas.addEventListener('click',event=>{
     }
     else{
     //tap.play()
+    moveY+=5;
     ball.speed=ball.spdMax
     ball.update(ball.co.y,ball.speed)
     }
@@ -259,8 +261,7 @@ function init(){
         objects.push(switchC);
     }
 }
-let maxHt=ball.co.y;
-console.log(maxHt);
+
 function drawFrame(){
     c.clearRect(0,0,canvas.width,canvas.height);
     //tapping ball
@@ -274,9 +275,9 @@ function drawFrame(){
     objects.forEach(object =>{
         object.draw();
         
-        if(ball.co.y<canvas.height/2 && ball.co.y>canvas.height/4){
+        /*if(ball.co.y<canvas.height/2 && ball.co.y>canvas.height/4){
             object.y--;
-        }
+        }*/
         /*
         if(ball.co.y<maxHt){
             maxHt=ball.co.y;
