@@ -2,6 +2,7 @@ let canvas=document.getElementById('canvas');
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 let c=canvas.getContext('2d');
+
 let bestScore=0;
 if(typeof(Storage)!=="undefined"){
     if(localStorage.getItem('bestScore')){
@@ -12,6 +13,7 @@ if(typeof(Storage)!=="undefined"){
         bestScore=Number(localStorage.getItem('bestScore'));
     }
 }
+
 let colors=['blue','deeppink','yellow','purple'];
 let totalScore=0;
 let died=false;
@@ -27,7 +29,7 @@ function returnColor(colors){
 function shuffleColor(){
     let colors1=colors;
     let i=colors1.length,k,t;
-  while(--i > 0){
+    while(--i > 0){
     k=Math.floor(Math.random()*(i+1));
       t=colors1[k];
       colors1[k]=colors1[i];
@@ -72,7 +74,7 @@ let modAng = function(x){
 
 let stopGame=function(){
     died=true;
-    console.log('heelo');
+    console.log('it has collided the wrong color');
 }
 let getDist = function(xy1,xy2){
     return {
@@ -82,7 +84,7 @@ let getDist = function(xy1,xy2){
 };
 
 let ball={
-    co:coordinates(canvas.width/2,canvas.height/4),
+    co:coordinates(canvas.width/2,40),
     speed:0,
     spdMax:-10,
     color: returnColor(colors),
@@ -117,7 +119,7 @@ class Switch{
             c.beginPath()
             c.moveTo(co.x,co.y)
             if(getDist(co,ball.co).d<25){
-                bleep.play()
+                //bleep.play()
                 ball.color=returnColor(colors)
                 this.destroy=true
             }
@@ -142,7 +144,7 @@ class Star{
             let r=15
             let r2=0.5*r
             if(getDist(ball.co,co).d< 15){
-                bleep.play()
+                //bleep.play()
                 totalScore+=1;
                 this.destroy=true;
                 if(totalScore>bestScore){
@@ -181,8 +183,8 @@ class Circle {
             if(this.col[j] != ball.color && !died){
                 let dist = getDist(co,ball.co);
                 if(dist.d+10 > this.radius-w/2 && dist.d-10 < this.radius+w/2){
-                    let pa = modAng(-dist.a);
-                    if(pa > startAngle && pa < endAngle){
+                    let ca = modAng(-dist.a);
+                    if(ca > startAngle && ca < endAngle){
                         stopGame();
                     };
                 };
@@ -217,8 +219,8 @@ function playPause(){
         c.moveTo(canvas.width-130-8,20)
         c.lineTo(canvas.width-130-8,40)
         c.lineTo(canvas.width-130+8,30)
-       c.fill()
-       c.closePath()
+        c.fill()
+        c.closePath()
    }
 }
 
@@ -257,18 +259,31 @@ function init(){
         objects.push(switchC);
     }
 }
+let maxHt=ball.co.y;
+console.log(maxHt);
 function drawFrame(){
     c.clearRect(0,0,canvas.width,canvas.height);
     //tapping ball
     init()
     ball.draw();
     score();
-    if(ball.co.y<canvas.height*3/4){
+    if(ball.co.y<canvas.height-40){
     ball.speed+=1;
     ball.update(ball.co.y,ball.speed);
     }
     objects.forEach(object =>{
         object.draw();
+        
+        if(ball.co.y<canvas.height/2 && ball.co.y>canvas.height/4){
+            object.y--;
+        }
+        /*
+        if(ball.co.y<maxHt){
+            maxHt=ball.co.y;
+            objects.forEach(o=>{
+                o.y-=5;
+            })
+        } */
     })
     for(let i = objects.length-1; i >= 0; i--){
         if(objects[i].destroy){
@@ -282,3 +297,4 @@ function drawFrame(){
 }
 
 drawFrame();
+ 
