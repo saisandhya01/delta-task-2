@@ -120,7 +120,7 @@ class Switch{
             c.beginPath()
             c.moveTo(co.x,co.y)
             if(getDist(co,ball.co).d<25){
-                //bleep.play()
+                bleep.play()
                 ball.color=returnColor(colors)
                 this.destroy=true
             }
@@ -145,7 +145,7 @@ class Star{
             let r=15
             let r2=0.5*r
             if(getDist(ball.co,co).d< 15){
-                //bleep.play()
+                bleep.play()
                 totalScore+=1;
                 this.destroy=true;
                 if(totalScore>bestScore){
@@ -242,7 +242,7 @@ canvas.addEventListener('click',event=>{
           }
     }
     else{
-    //tap.play()
+    tap.play()
     moveY+=5;
     ball.speed=ball.spdMax
     ball.update(ball.co.y,ball.speed)
