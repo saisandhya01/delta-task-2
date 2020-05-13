@@ -162,18 +162,45 @@ class Star{
         c.fill()
     }
 }
-
+class Rectangle{
+    constructor(y){
+        this.color=shuffleColor()
+        this.y=100+obstacle.sep*y
+        this.x=canvas.width/2-200
+    }
+    draw(){
+        let co=coordinates(this.x,this.y);
+        for(let i=0;i<4;i++){
+            c.beginPath()
+            c.fillStyle=this.color[i];
+            if(this.color[i]!=ball.color){
+                if(this.x+100*i>=canvas.width/2-100 && this.x+100*i<=canvas.width/2){
+                if(ball.co.y-10<co.y+20){
+                    console.log('wrong color');
+                }
+            } }
+            c.rect(this.x+100*i,co.y,100,20);
+            c.fill();
+            c.closePath()
+        }
+        this.x-=5;
+        if(this.x<canvas.width/2-800){
+            this.x=canvas.width/2+600;
+        }
+    }
+}
 class Circle {
-    constructor(y,radius,col,angle,destroy){
+    constructor(y,radius,col,angle,destroy,dir){
         this.y=100+obstacle.sep*y
         this.radius=radius
         this.col=col
         this.angle=angle
         this.destroy=destroy
+        this.dir=dir
             }
     draw(){
         let co=coordinates(canvas.width/2,this.y)
-        let speed=0.01
+        let speed=0.01*this.dir
         c.lineWidth=this.radius*15/100
         let w=this.radius*15/100
         for(let j=0;j<4;j++){
@@ -191,7 +218,7 @@ class Circle {
                 };
             };
             
-            c.arc(co.x,co.y,this.radius,startAngle,endAngle,false)
+            c.arc(co.x,co.y,this.radius,startAngle,endAngle)
             c.stroke()
         }
         this.angle+=speed
@@ -253,8 +280,24 @@ let objects=[];
 function init(){
     while(obstacle.n<20){
         obstacle.n++;
-        let circle=new Circle(obstacle.n,100,shuffleColor(),0,false);
-        objects.push(circle);
+        let random=Math.floor(Math.random()*3);
+        switch(random){
+        case 0:
+           let circle=new Circle(obstacle.n,100,shuffleColor(),0,false,1);
+           objects.push(circle);
+           break;
+        case 1:
+           let recta=new Rectangle(obstacle.n);
+           objects.push(recta);
+           break;
+        case 2:
+           let col=shuffleColor();
+           let c1=new Circle(obstacle.n,100,col,0,false,1);
+           objects.push(c1);
+           let c2=new Circle(obstacle.n,70,col,0,false,-1);
+           objects.push(c2);
+           break;
+        };
         let star=new Star(obstacle.n,false);
         objects.push(star);
         let switchC=new Switch(obstacle.n,false);
@@ -275,16 +318,6 @@ function drawFrame(){
     objects.forEach(object =>{
         object.draw();
         
-        /*if(ball.co.y<canvas.height/2 && ball.co.y>canvas.height/4){
-            object.y--;
-        }*/
-        /*
-        if(ball.co.y<maxHt){
-            maxHt=ball.co.y;
-            objects.forEach(o=>{
-                o.y-=5;
-            })
-        } */
     })
     for(let i = objects.length-1; i >= 0; i--){
         if(objects[i].destroy){
