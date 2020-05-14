@@ -4,6 +4,7 @@ canvas.height=window.innerHeight;
 let c=canvas.getContext('2d');
 
 let bestScore=0;
+let bestScore1=0;
 if(typeof(Storage)!=="undefined"){
     if(localStorage.getItem('bestScore')){
         bestScore=Number(localStorage.getItem('bestScore'))
@@ -12,16 +13,25 @@ if(typeof(Storage)!=="undefined"){
         localStorage.setItem('bestScore','0');
         bestScore=Number(localStorage.getItem('bestScore'));
     }
+    if(localStorage.getItem('bestScore1')){
+        bestScore1=Number(localStorage.getItem('bestScore1'))
+    }
+    else{
+        localStorage.setItem('bestScore1','0');
+        bestScore1=Number(localStorage.getItem('bestScore1'));
+    }
 }
 
 let colors=['blue','deeppink','yellow','purple'];
 let totalScore=0;
+let totalScore1=0;
 let died=false;
-let moveY=0;
 let tap=new Audio('sound1.mp3');
 let bleep=new Audio('sound2.mp3')
-let coordinates=function(dx,dy){
-    return {x:dx,y:canvas.height-dy+moveY}
+let moveY=0
+let moveY1=0
+let coordinates=function(dx,dy,s){
+    return {x:dx,y:canvas.height-dy+s}
 }
 function returnColor(colors){
     let col=colors[Math.floor(Math.random()*4)];
@@ -56,6 +66,14 @@ function score(){
     c.font="bold 18px Arial";
     c.fillText(totalScore,75,60);
     c.fillText(bestScore,170,60)
+    c.fillStyle='green';
+    c.font="bold 20px Arial";
+    c.fillText('Score',canvas.width/2+50,40);
+    c.fillText('Best Score',canvas.width/2+130,40);
+    c.fillStyle='white';
+    c.font="bold 18px Arial";
+    c.fillText(totalScore1,canvas.width/2+75,60);
+    c.fillText(bestScore1,canvas.width/2+170,60)
     
 }
 
@@ -67,7 +85,7 @@ let modAng = function(x){
     var y = x;
     
     while(y < 0){
-       console.log(y)
+    
         y += Math.PI*2;
     };
     return y%(Math.PI*2);
@@ -84,36 +102,52 @@ let getDist = function(xy1,xy2){
     };
 };
 
-let ball={
-    co:coordinates(canvas.width/2,40),
-    speed:0,
-    spdMax:-10,
-    color: returnColor(colors),
-    draw(){
-     c.globalAlpha=1
-     c.beginPath()
-     c.arc(this.co.x,this.co.y,10,0,Math.PI*2,false)
-     c.fillStyle=this.color
-     c.closePath()
-     c.fill()
-    },
-    
-     update(a,b){
-
-     this.co.y=a;
-     this.speed=b;
-     this.co.y+=this.speed
-     }
-
-    
-}
-class Switch{
-    constructor(y,destroy){
-        this.y=100+obstacle.sep*y+obstacle.sep/2
-        this.destroy=destroy
+class Ball{
+    constructor(x,color,k){
+        this.x=x
+        this.y=40
+        this.k=k
+        if(this.k===0){
+           this.co=coordinates(this.x,this.y,moveY)
+        }
+        else{
+            this.co=coordinates(this.x,this.y,moveY1)
+        }
+        this.color=color
+        this.speed=0
+        this.spdMax=-10
     }
     draw(){
-        let co=coordinates(canvas.width/2,this.y)
+        c.globalAlpha=1
+        c.beginPath()
+        c.arc(this.co.x,this.co.y,10,0,Math.PI*2,false)
+        c.fillStyle=this.color
+        c.closePath()
+        c.fill()
+    }
+    update(a,b){
+
+        this.co.y=a;
+        this.speed=b;
+        this.co.y+=this.speed
+    }
+}   
+
+class Switch{
+    constructor(x,y,k){
+        this.x=x
+        this.y=100+obstacle.sep*y+obstacle.sep/2
+        this.destroy=false
+        this.k=k
+    }
+    draw(){
+        let co;
+        if(this.k===0){
+           co=coordinates(this.x,this.y,moveY)
+        }
+        else{
+            co=coordinates(this.x,this.y,moveY1)
+        }
         for(let i=0;i<4;i++){
             let a=i*Math.PI/2
             c.fillStyle=colors[i]
@@ -124,6 +158,11 @@ class Switch{
                 ball.color=returnColor(colors)
                 this.destroy=true
             }
+            if(getDist(co,ball1.co).d<25){
+                bleep.play()
+                ball1.color=returnColor(colors)
+                this.destroy=true
+            }
             c.arc(co.x,co.y,15,a,a+Math.PI/2,false)
             c.fill()   
         }
@@ -132,12 +171,20 @@ class Switch{
 
 }
 class Star{
-    constructor(y,destroy){
+    constructor(x,y,k){
+        this.x=x
         this.y=100+obstacle.sep*y
-        this.destroy=destroy
+        this.destroy=false
+        this.k=k
     }
     draw(){
-        let co=coordinates(canvas.width/2,this.y)
+        let co;
+        if(this.k===0){
+           co=coordinates(this.x,this.y,moveY)
+        }
+        else{
+            co=coordinates(this.x,this.y,moveY1)
+        }
         c.beginPath()
         for(let i=0;i<=4;i++){
             let angle=i/5*Math.PI*2-Math.PI/2
@@ -153,6 +200,15 @@ class Star{
                     bestScore=Number(localStorage.getItem('bestScore'));
                 }
             }
+            if(getDist(ball1.co,co).d< 15){
+                bleep.play()
+                totalScore1+=1;
+                this.destroy=true;
+                if(totalScore1>bestScore1){
+                    localStorage.setItem('bestScore1',totalScore1);
+                    bestScore1=Number(localStorage.getItem('bestScore1'));
+                }
+            }
             c.lineTo(co.x+Math.cos(angle)*r,co.y+Math.sin(angle)*r);
             c.lineTo(co.x+Math.cos(angle2)*r2,co.y+Math.sin(angle2)*r2);
             
@@ -163,18 +219,27 @@ class Star{
     }
 }
 class Rectangle{
-    constructor(y){
+    constructor(x,y,k){
         this.color=shuffleColor()
         this.y=100+obstacle.sep*y
-        this.x=canvas.width/2-200
+        this.x=x-200
+        this.chk=x
+        this.k=k
+        this.destroy=false
     }
     draw(){
-        let co=coordinates(this.x,this.y);
+        let co;
+        if(this.k===0){
+           co=coordinates(this.x,this.y,moveY)
+        }
+        else{
+            co=coordinates(this.x,this.y,moveY1)
+        }
         for(let i=0;i<4;i++){
             c.beginPath()
             c.fillStyle=this.color[i];
             if(this.color[i]!=ball.color){
-                if(this.x+100*i>=canvas.width/2-100 && this.x+100*i<=canvas.width/2){
+                if(this.x+100*i>=this.chk-100 && this.x+100*i<=this.chk){
                 if(ball.co.y-10<co.y+20){
                     console.log('wrong color');
                 }
@@ -183,23 +248,31 @@ class Rectangle{
             c.fill();
             c.closePath()
         }
-        this.x-=5;
-        if(this.x<canvas.width/2-800){
-            this.x=canvas.width/2+600;
+        this.x-=3;
+        if(this.x<this.chk-400){
+            this.x=this.chk+100;
         }
     }
 }
 class Circle {
-    constructor(y,radius,col,angle,destroy,dir){
+    constructor(x,y,radius,col,angle,dir,k){
         this.y=100+obstacle.sep*y
         this.radius=radius
         this.col=col
+        this.x=x
         this.angle=angle
-        this.destroy=destroy
+        this.destroy=false
         this.dir=dir
+        this.k=k
             }
     draw(){
-        let co=coordinates(canvas.width/2,this.y)
+        let co;
+        if(this.k===0){
+           co=coordinates(this.x,this.y,moveY)
+        }
+        else{
+            co=coordinates(this.x,this.y,moveY1)
+        }
         let speed=0.01*this.dir
         c.lineWidth=this.radius*15/100
         let w=this.radius*15/100
@@ -217,6 +290,15 @@ class Circle {
                     };
                 };
             };
+            if(this.col[j] != ball1.color && !died){
+                let dist = getDist(co,ball1.co);
+                if(dist.d+10 > this.radius-w/2 && dist.d-10 < this.radius+w/2){
+                    let ca = modAng(-dist.a);
+                    if(ca > startAngle && ca < endAngle){
+                        stopGame();
+                    };
+                };
+            };
             
             c.arc(co.x,co.y,this.radius,startAngle,endAngle)
             c.stroke()
@@ -224,6 +306,15 @@ class Circle {
         this.angle+=speed
     }
 }
+function sepLine(){
+    c.beginPath()
+    c.moveTo(canvas.width/2,0)
+    c.strokeStyle='white'
+    c.lineTo(canvas.width/2,canvas.height)
+    c.stroke()
+    c.closePath()
+}
+
 function playPause(){
     c.beginPath()
     c.fillStyle='grey'
@@ -268,11 +359,22 @@ canvas.addEventListener('click',event=>{
               requestAnimationFrame(drawFrame);
           }
     }
-    else{
-    tap.play()
-    moveY+=5;
-    ball.speed=ball.spdMax
-    ball.update(ball.co.y,ball.speed)
+    
+})
+let ballC=returnColor(colors)
+let ball=new Ball(canvas.width/4,ballC,0);
+let ball1=new Ball(canvas.width*3/4,ballC,1);
+window.addEventListener('keydown',event=>{
+    let keyPressed=event.keyCode
+    if(keyPressed===83){
+        moveY+=5;
+        ball.speed=ball.spdMax;
+        ball.update(ball.co.y,ball.speed);
+    }
+    if(keyPressed===76){
+        moveY1+=5;
+        ball1.speed=ball1.spdMax;
+        ball1.update(ball1.co.y,ball1.speed);
     }
 })
 
@@ -283,25 +385,32 @@ function init(){
         let random=Math.floor(Math.random()*3);
         switch(random){
         case 0:
-           let circle=new Circle(obstacle.n,100,shuffleColor(),0,false,1);
-           objects.push(circle);
+           let circle=new Circle(canvas.width/4,obstacle.n,100,shuffleColor(),0,1,0);
+           let circle1=new Circle(canvas.width*3/4,obstacle.n,100,shuffleColor(),0,1,1);
+           objects.push(circle,circle1);
            break;
         case 1:
-           let recta=new Rectangle(obstacle.n);
-           objects.push(recta);
+           let recta=new Rectangle(canvas.width/4,obstacle.n,0);
+           let recta1=new Rectangle(canvas.width*3/4,obstacle.n,1);
+           objects.push(recta,recta1);
            break;
         case 2:
            let col=shuffleColor();
-           let c1=new Circle(obstacle.n,100,col,0,false,1);
-           objects.push(c1);
-           let c2=new Circle(obstacle.n,70,col,0,false,-1);
-           objects.push(c2);
+           let c1=new Circle(canvas.width/4,obstacle.n,100,col,0,1,0);
+           let c2=new Circle(canvas.width*3/4,obstacle.n,100,col,0,1,1);
+           objects.push(c1,c2);
+           let c3=new Circle(canvas.width/4,obstacle.n,50,col,0,-1,0);
+           let c4=new Circle(canvas.width*3/4,obstacle.n,50,col,0,-1,1);
+           objects.push(c3,c4);
            break;
+        
         };
-        let star=new Star(obstacle.n,false);
-        objects.push(star);
-        let switchC=new Switch(obstacle.n,false);
-        objects.push(switchC);
+        let star=new Star(canvas.width/4,obstacle.n,0);
+        let star1=new Star(canvas.width*3/4,obstacle.n,1);
+        objects.push(star,star1);
+        let switchC=new Switch(canvas.width/4,obstacle.n,0);
+        let switchC1=new Switch(canvas.width*3/4,obstacle.n,1);
+        objects.push(switchC,switchC1);
     }
 }
 
@@ -310,10 +419,15 @@ function drawFrame(){
     //tapping ball
     init()
     ball.draw();
+    ball1.draw();
     score();
     if(ball.co.y<canvas.height-40){
     ball.speed+=1;
     ball.update(ball.co.y,ball.speed);
+    }
+    if(ball1.co.y<canvas.height-40){
+        ball1.speed+=1;
+        ball1.update(ball1.co.y,ball1.speed);
     }
     objects.forEach(object =>{
         object.draw();
@@ -324,6 +438,7 @@ function drawFrame(){
             objects.splice(i,1);
         };
     };
+    sepLine()
     playPause()
     if(!paused){
     requestAnimationFrame(drawFrame)
