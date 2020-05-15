@@ -26,6 +26,7 @@ let colors=['blue','deeppink','yellow','purple'];
 let totalScore=0;
 let totalScore1=0;
 let died=false;
+let died1=false;
 let tap=new Audio('sound1.mp3');
 let bleep=new Audio('sound2.mp3')
 let moveY=0
@@ -95,6 +96,11 @@ let stopGame=function(){
     died=true;
     console.log('it has collided the wrong color');
 }
+let stopGame1=function(){
+    died1=true;
+    console.log('it has collided the wrong color');
+}
+
 let getDist = function(xy1,xy2){
     return {
         d:Math.sqrt(Math.pow(xy1.x-xy2.x,2)+Math.pow(xy1.y-xy2.y,2)),
@@ -238,12 +244,21 @@ class Rectangle{
         for(let i=0;i<4;i++){
             c.beginPath()
             c.fillStyle=this.color[i];
-            if(this.color[i]!=ball.color){
+            if(this.color[i]!=ball.color && ball.color!='white' && !died){
                 if(this.x+100*i>=this.chk-100 && this.x+100*i<=this.chk){
                 if(ball.co.y-10<co.y+20){
+                    stopGame();
                     console.log('wrong color');
                 }
             } }
+            if(this.color[i]!=ball1.color && ball1.color!='white' && !died1){
+                if(this.x+100*i>=this.chk-100 && this.x+100*i<=this.chk){
+                if(ball1.co.y-10<co.y+20){
+                    stopGame1();
+                    console.log('wrong color');
+                }
+            } }
+            
             c.rect(this.x+100*i,co.y,100,20);
             c.fill();
             c.closePath()
@@ -281,7 +296,7 @@ class Circle {
             c.strokeStyle=this.col[j]
             let startAngle=modAng(this.angle+Math.PI/2*j)
             let endAngle=modAng(startAngle+Math.PI/2)
-            if(this.col[j] != ball.color && !died){
+            if(this.col[j] != ball.color && !died && ball.color!='white'){
                 let dist = getDist(co,ball.co);
                 if(dist.d+10 > this.radius-w/2 && dist.d-10 < this.radius+w/2){
                     let ca = modAng(-dist.a);
@@ -290,12 +305,12 @@ class Circle {
                     };
                 };
             };
-            if(this.col[j] != ball1.color && !died){
+            if(this.col[j] != ball1.color && !died1 && ball1.color!='white'){
                 let dist = getDist(co,ball1.co);
                 if(dist.d+10 > this.radius-w/2 && dist.d-10 < this.radius+w/2){
                     let ca = modAng(-dist.a);
                     if(ca > startAngle && ca < endAngle){
-                        stopGame();
+                        stopGame1();
                     };
                 };
             };
@@ -343,9 +358,86 @@ function playPause(){
    }
 }
 
+let coinImage=new Image();
+coinImage.src='spritesheet.png';
+let frameIndex=0
+let noOfFrames=10
+function sprite(option){
+    let object={}
+    object.width=option.width
+    object.height=option.height
+    object.image=option.image
+    object.srcX=0
+    object.k=option.k
+    object.x=option.x
+    object.y=100+obstacle.sep*option.y+obstacle.sep/2
+    object.destroy=false
+    object.draw=function(){
+        let co;
+        if(object.k===0){
+            co=coordinates(object.x,object.y,moveY)
+        }
+        else{
+            co=coordinates(object.x,object.y,moveY1)
+        }
+        if(Math.sqrt(Math.pow(co.y-ball.co.y,2))<object.height){
+            if(co.x===canvas.width/4-50){
+                ball.color='white'
+                object.destroy=true
+        } }
+        if(Math.sqrt(Math.pow(co.y-ball1.co.y,2))<object.height){
+            if(co.x===canvas.width*3/4-50){
+                ball1.color='white'
+                 object.destroy=true
+            }
+        }
+        c.drawImage(
+           object.image,
+           object.srcX,
+           0,
+           100,
+           100,
+           co.x,
+           co.y,
+           object.width,
+           object.height
+        )
+        object.update()
+    }
+    object.update=function(){
+        frameIndex=++frameIndex % noOfFrames
+        object.srcX=frameIndex*object.width
+    }
+    return object
+}
+
+function restartMessage(W){
+    c.beginPath()
+    c.globalAlpha = 0.7;
+    c.fillStyle = '#000';
+    if(W===canvas.width/4){
+        c.fillRect(0,0,2*W,canvas.height); }
+    else{
+        c.fillRect(canvas.width/2,0,2*W/3,canvas.height);
+    }
+    c.globalAlpha = 1;
+    c.fillStyle = '#000';
+    c.strokeStyle = '#EEE';
+    c.lineWidth = 2;
+    if(W===canvas.width/4){
+    c.fillText('TAP ENTER TO',W,canvas.height/2);
+    c.strokeText('TAP ENTER TO',W,canvas.height/2);
+    }
+    else{
+        c.fillText('TAP SPACE TO',W,canvas.height/2);
+        c.strokeText('TAP SPACE TO',W,canvas.height/2); 
+    }
+    c.fillText('RESTART',W,canvas.height/2+50);
+    c.strokeText('RESTART',W,canvas.height/2+50);
+    c.closePath()
+}
 let clickCount=0;
 let paused=false;
-//on tap
 canvas.addEventListener('click',event=>{
     mouse.x=event.offsetX
     mouse.y=event.offsetY
@@ -376,9 +468,21 @@ window.addEventListener('keydown',event=>{
         ball1.speed=ball1.spdMax;
         ball1.update(ball1.co.y,ball1.speed);
     }
+    if(keyPressed===13){
+        died=false
+        totalScore=0
+        moveY=0
+    }
+    if(keyPressed===32){
+        died1=false
+        totalScore1=0
+        moveY1=0
+    }
 })
 
 let objects=[];
+let randomP=Math.floor(Math.random()*20);
+console.log(randomP)
 function init(){
     while(obstacle.n<20){
         obstacle.n++;
@@ -408,9 +512,31 @@ function init(){
         let star=new Star(canvas.width/4,obstacle.n,0);
         let star1=new Star(canvas.width*3/4,obstacle.n,1);
         objects.push(star,star1);
-        let switchC=new Switch(canvas.width/4,obstacle.n,0);
-        let switchC1=new Switch(canvas.width*3/4,obstacle.n,1);
-        objects.push(switchC,switchC1);
+        if(randomP===obstacle.n){
+            let coin=sprite({
+                width: 100,
+                height: 50,
+                x: canvas.width/4-50,
+                y: obstacle.n,
+                k:0,
+                image: coinImage
+            })
+            let coin1=sprite({
+                width: 100,
+                height: 50,
+                x: canvas.width*3/4-50,
+                y: obstacle.n,
+                k:1,
+                image: coinImage
+            })
+            objects.push(coin,coin1)
+          
+        }
+        else{
+          let switchC=new Switch(canvas.width/4,obstacle.n,0);
+          let switchC1=new Switch(canvas.width*3/4,obstacle.n,1);
+          objects.push(switchC,switchC1);
+        }
     }
 }
 
@@ -438,6 +564,12 @@ function drawFrame(){
             objects.splice(i,1);
         };
     };
+    if(died){
+        restartMessage(canvas.width/4)
+    }
+    if(died1){
+        restartMessage(canvas.width*3/4)
+    }
     sepLine()
     playPause()
     if(!paused){
