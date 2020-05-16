@@ -471,12 +471,12 @@ window.addEventListener('keydown',event=>{
     if(keyPressed===13){
         died=false
         totalScore=0
-        moveY=0
+        ball.spdMax=-10
     }
     if(keyPressed===32){
         died1=false
         totalScore1=0
-        moveY1=0
+        ball1.spdMax=-10
     }
 })
 
@@ -566,9 +566,13 @@ function drawFrame(){
     };
     if(died){
         restartMessage(canvas.width/4)
+        ball.spdMax=0
+        moveY=0
     }
     if(died1){
         restartMessage(canvas.width*3/4)
+        ball1.spdMax=0
+        moveY1=0
     }
     sepLine()
     playPause()
